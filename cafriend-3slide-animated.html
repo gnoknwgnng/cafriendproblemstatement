@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CA Friend — Problem · Solution · Differentiation</title>
+<style>
+  :root{
+    --paper:#F7F5EF;
+    --ink:#16241F;
+    --ink-soft:#4B5A54;
+    --teal:#0F6E56;
+    --teal-deep:#085041;
+    --teal-pale:#E1F5EE;
+    --teal-mid:#5DCAA5;
+    --coral:#D85A30;
+    --coral-pale:#FAECE7;
+    --coral-mid:#F0997B;
+    --coral-deep:#8A3315;
+    --amber:#BA7517;
+    --line:#D8D2C2;
+    --line-strong:#B9B19A;
+    --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+
+  #navbar{
+    position:fixed; top:0; left:0; right:0; height:64px;
+    background:rgba(247,245,239,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 28px; z-index:1000;
+  }
+  #navbar .brand{display:flex; align-items:center; gap:11px; font-weight:700; font-size:14.5px; color:var(--ink);}
+  #navbar .brand .mark{
+    width:30px;height:30px;border-radius:8px;background:var(--teal-deep);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;
+    letter-spacing:.01em;
+  }
+  #navbar .brand .divider{color:var(--line-strong); font-weight:400;}
+  #navbar .brand .section-name{color:var(--ink-soft); font-weight:600;}
+
+  #navbar .controls{display:flex; align-items:center; gap:18px;}
+
+  #stepDots{display:flex; gap:6px; align-items:center; padding:0 4px;}
+  .stepdot{width:6px; height:6px; border-radius:50%; background:var(--line-strong); transition:background .25s ease, transform .25s ease, width .25s ease;}
+  .stepdot.done{background:var(--teal-mid);}
+  .stepdot.current{background:var(--coral); transform:scale(1.15); width:16px; border-radius:3px;}
+
+  .navgroup{display:flex; align-items:center; gap:2px; background:var(--white); border:1px solid var(--line); border-radius:10px; padding:3px;}
+  .navbtn{
+    border:none; background:transparent; color:var(--ink);
+    font-size:13.5px; font-weight:600; padding:8px 16px; border-radius:7px; cursor:pointer;
+    font-family:inherit; transition:background .15s ease, color .15s ease, transform .1s ease;
+    display:flex; align-items:center; gap:6px;
+  }
+  .navbtn:hover{background:var(--paper-2);}
+  .navbtn:active{transform:scale(.96);}
+  .navbtn:disabled{color:var(--line-strong); cursor:default; pointer-events:none;}
+  .navbtn.primary{background:var(--teal-deep); color:#fff;}
+  .navbtn.primary:hover{background:var(--teal);}
+  .navbtn .arrow{font-size:13px; opacity:.7;}
+
+  #slideCounter{
+    font-size:13px; color:var(--ink-soft); font-weight:600;
+    font-variant-numeric:tabular-nums;
+    padding:0 4px; min-width:38px; text-align:center;
+  }
+
+  #deck{position:relative; width:100%; height:100vh; padding-top:64px;}
+  .slide{
+    display:none;
+    width:100%; height:calc(100vh - 64px);
+    padding:48px 72px 40px;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:flex-start;
+  }
+  .slide.active{display:flex;}
+
+  .eyebrow{
+    font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--teal); margin-bottom:8px;
+    opacity:0; transform:translateY(8px);
+    animation:riseIn .5s ease forwards;
+  }
+  .eyebrow.coral{color:var(--coral);}
+  h1.slide-title{
+    font-size:38px; font-weight:800; letter-spacing:-0.01em; line-height:1.12;
+    margin:0 0 8px; color:var(--ink); max-width:900px;
+    opacity:0; transform:translateY(8px);
+    animation:riseIn .5s ease forwards .08s;
+  }
+  .slide-sub{
+    font-size:16px; color:var(--ink-soft); max-width:700px; line-height:1.5; margin:0 0 18px;
+    opacity:0; transform:translateY(8px);
+    animation:riseIn .5s ease forwards .16s;
+  }
+  @keyframes riseIn{to{opacity:1; transform:translateY(0);}}
+
+  .stage{flex:1; width:100%; display:flex; align-items:center; justify-content:center; position:relative;}
+  .stage svg{max-width:100%; height:auto; overflow:visible;}
+
+  .footer-row{
+    position:absolute; bottom:18px; left:72px; right:72px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .footer-tag{font-size:12px; color:var(--ink-soft); opacity:.7; font-weight:600; letter-spacing:.04em;}
+  #clickHint{
+    font-size:12.5px; color:var(--ink-soft); background:var(--white); border:1px solid var(--line);
+    padding:6px 14px; border-radius:20px; opacity:.9;
+    display:flex; align-items:center; gap:7px;
+  }
+  #clickHint .pulse-dot{
+    width:6px; height:6px; border-radius:50%; background:var(--coral);
+    animation:hintPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes hintPulse{0%,100%{opacity:1; transform:scale(1);} 50%{opacity:.4; transform:scale(1.5);}}
+
+  /* ---- node base states for SVG mind map elements ---- */
+  .node-pop{ opacity:0; transform-origin:center; }
+  .node-pop.show{
+    animation:popIn .45s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  @keyframes popIn{
+    0%{opacity:0; transform:scale(.4);}
+    100%{opacity:1; transform:scale(1);}
+  }
+  .line-draw{ opacity:0; }
+  .line-draw.show{ animation:fadeLine .35s ease forwards; }
+  @keyframes fadeLine{
+    0%{opacity:0;}
+    100%{opacity:1;}
+  }
+  .x-pop{ opacity:0; }
+  .x-pop.show{ animation:xPop .3s ease forwards; }
+  @keyframes xPop{
+    0%{opacity:0;}
+    100%{opacity:1;}
+  }
+  .x-pop-inner{ transform-origin:center; transform:scale(0); transition:none; }
+  .x-pop.show .x-pop-inner{ animation:xScale .32s cubic-bezier(.34,1.56,.64,1) forwards; }
+  @keyframes xScale{ to{ transform:scale(1); } }
+
+  .heal-fade{ transition:opacity .35s ease, stroke .35s ease; }
+  .center-morph{ transition:fill 1s ease, stroke 1s ease; }
+
+  .row-reveal{ opacity:0; transform:translateY(10px); }
+  .row-reveal.show{ animation:rowIn .4s ease forwards; }
+  @keyframes rowIn{ to{opacity:1; transform:translateY(0);} }
+
+  .glow-col{ transition: filter .5s ease; }
+  .glow-col.lit{ filter:drop-shadow(0 0 6px rgba(15,110,86,0.35)); }
+
+  /* pulse rings for sync moment on solution slide */
+  .pulse-ring{
+    opacity:0; transform-origin:center;
+  }
+  .pulse-ring.show{
+    animation:ringPulse 1s ease-out forwards;
+  }
+  @keyframes ringPulse{
+    0%{opacity:.55; transform:scale(.6);}
+    100%{opacity:0; transform:scale(1.6);}
+  }
+
+  /* HTML competitor table styling */
+  .comp-wrap{width:100%; max-width:1020px;}
+  .comp-grid{display:grid; grid-template-columns: 2fr 1.3fr 1.3fr 1.3fr 1.3fr; width:100%; font-size:14px;}
+  .comp-grid .hcell{
+    font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); font-weight:700;
+    padding:10px 14px; border-bottom:2px solid var(--line-strong);
+  }
+  .comp-grid .hcell.cf{color:var(--teal-deep); background:var(--teal-pale); border-radius:8px 8px 0 0;}
+  .comp-grid .cell{padding:11px 14px; border-bottom:1px solid var(--line); display:flex; align-items:center;}
+  .comp-grid .cell.feature{font-weight:600; color:var(--ink); font-size:13.5px;}
+  .comp-grid .cell.cf{background:rgba(225,245,238,0.4);}
+  .yes{color:var(--teal-deep); font-weight:700;}
+  .no{color:#A39C8A;}
+  .partial{color:var(--amber); font-weight:600;}
+  .tag-pill{
+    display:inline-flex; align-items:center; gap:5px; font-size:13px; font-weight:700;
+  }
+  .tag-pill.yes::before{content:"✓"; color:var(--teal);}
+  .tag-pill.no::before{content:"–"; color:#A39C8A;}
+  .tag-pill.partial::before{content:"~"; color:var(--amber);}
+</style>
+</head>
+<body>
+
+<div id="navbar">
+  <div class="brand">
+    <div class="mark">CA</div>
+    CA Friend
+    <span class="divider">/</span>
+    <span class="section-name" id="sectionName">The problem</span>
+  </div>
+  <div class="controls">
+    <div id="stepDots"></div>
+    <div class="navgroup">
+      <button class="navbtn" id="prevBtn"><span class="arrow">&larr;</span>Back</button>
+      <span id="slideCounter">1/3</span>
+      <button class="navbtn primary" id="nextBtn">Next<span class="arrow">&rarr;</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="deck">
+
+  <!-- ================= SLIDE 1: PROBLEM ================= -->
+  <section class="slide active" id="slide-1" data-steps="7">
+    <div class="eyebrow coral">The problem</div>
+    <h1 class="slide-title">A CA firm's day, scattered across six logins</h1>
+    <p class="slide-sub">Every client touches accounting, GST, tax, audit, payroll, and compliance — but each lives in its own disconnected tool.</p>
+    <div class="stage">
+      <svg viewBox="0 0 980 560" width="980" height="560">
+        <!-- center node -->
+        <g id="p-center" class="node-pop show">
+          <circle cx="490" cy="280" r="78" fill="var(--coral-pale)" stroke="var(--coral)" stroke-width="2"/>
+          <text x="490" y="272" text-anchor="middle" style="font-size:16px;font-weight:700;fill:#8A3315;">CA Firm</text>
+          <text x="490" y="293" text-anchor="middle" style="font-size:12.5px;font-weight:500;fill:#9C4A2A;">one client, one day</text>
+        </g>
+
+        <!-- step 1: Accounting (top) -->
+        <g data-step="1">
+          <line class="line-draw" x1="490" y1="202" x2="490" y2="110" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7"/>
+          <g class="node-pop">
+            <circle cx="490" cy="80" r="58" fill="#fff" stroke="var(--coral)" stroke-width="1.5"/>
+            <text x="490" y="74" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Accounting</text>
+            <text x="490" y="93" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">Tally / Excel</text>
+          </g>
+          <g class="x-pop" stroke="var(--coral)" stroke-width="2.5" stroke-linecap="round" transform="translate(490,156)">
+            <g class="x-pop-inner">            <line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+                    </g>
+        </g>
+
+        <!-- step 2: GST filing (top-right) -->
+        <g data-step="2">
+          <line class="line-draw" x1="552" y1="234" x2="700" y2="140" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7"/>
+          <g class="node-pop">
+            <circle cx="750" cy="115" r="58" fill="#fff" stroke="var(--coral)" stroke-width="1.5"/>
+            <text x="750" y="109" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">GST filing</text>
+            <text x="750" y="128" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">ClearTax portal</text>
+          </g>
+          <g class="x-pop" stroke="var(--coral)" stroke-width="2.5" stroke-linecap="round" transform="translate(626,187)">
+            <g class="x-pop-inner">            <line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+                    </g>
+        </g>
+
+        <!-- step 3: Income tax (right) -->
+        <g data-step="3">
+          <line class="line-draw" x1="566" y1="300" x2="760" y2="320" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7"/>
+          <g class="node-pop">
+            <circle cx="840" cy="330" r="58" fill="#fff" stroke="var(--coral)" stroke-width="1.5"/>
+            <text x="840" y="324" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Income tax</text>
+            <text x="840" y="343" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">ITR utility</text>
+          </g>
+          <g class="x-pop" stroke="var(--coral)" stroke-width="2.5" stroke-linecap="round" transform="translate(663,310)">
+            <g class="x-pop-inner">            <line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+                    </g>
+        </g>
+
+        <!-- step 4: Audit (bottom-right) -->
+        <g data-step="4">
+          <line class="line-draw" x1="540" y1="345" x2="700" y2="440" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7"/>
+          <g class="node-pop">
+            <circle cx="750" cy="465" r="58" fill="#fff" stroke="var(--coral)" stroke-width="1.5"/>
+            <text x="750" y="459" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Audit</text>
+            <text x="750" y="478" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">Working papers</text>
+          </g>
+          <g class="x-pop" stroke="var(--coral)" stroke-width="2.5" stroke-linecap="round" transform="translate(620,392)">
+            <g class="x-pop-inner">            <line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+                    </g>
+        </g>
+
+        <!-- step 5: Payroll (bottom-left) -->
+        <g data-step="5">
+          <line class="line-draw" x1="440" y1="345" x2="280" y2="440" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7"/>
+          <g class="node-pop">
+            <circle cx="230" cy="465" r="58" fill="#fff" stroke="var(--coral)" stroke-width="1.5"/>
+            <text x="230" y="459" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Payroll</text>
+            <text x="230" y="478" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">spreadsheets</text>
+          </g>
+          <g class="x-pop" stroke="var(--coral)" stroke-width="2.5" stroke-linecap="round" transform="translate(360,392)">
+            <g class="x-pop-inner">            <line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+                    </g>
+        </g>
+
+        <!-- step 6: Client comms (left) -->
+        <g data-step="6">
+          <line class="line-draw" x1="414" y1="300" x2="220" y2="320" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7"/>
+          <g class="node-pop">
+            <circle cx="140" cy="330" r="58" fill="#fff" stroke="var(--coral)" stroke-width="1.5"/>
+            <text x="140" y="324" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Client comms</text>
+            <text x="140" y="343" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">WhatsApp, email</text>
+          </g>
+          <g class="x-pop" stroke="var(--coral)" stroke-width="2.5" stroke-linecap="round" transform="translate(317,310)">
+            <g class="x-pop-inner">            <line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+                    </g>
+        </g>
+
+        <!-- step 7: Compliance (top-left) + closing caption -->
+        <g data-step="7">
+          <line class="line-draw" x1="428" y1="234" x2="280" y2="140" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7"/>
+          <g class="node-pop">
+            <circle cx="230" cy="115" r="58" fill="#fff" stroke="var(--coral)" stroke-width="1.5"/>
+            <text x="230" y="109" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Compliance</text>
+            <text x="230" y="128" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">manual calendar</text>
+          </g>
+          <g class="x-pop" stroke="var(--coral)" stroke-width="2.5" stroke-linecap="round" transform="translate(354,187)">
+            <g class="x-pop-inner">            <line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+                    </g>
+          <g class="node-pop">
+            <text x="490" y="540" text-anchor="middle" style="font-size:14.5px;font-weight:700;fill:var(--coral-deep);">6-8 tools. Same data, re-entered everywhere. Zero sync.</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <div class="footer-row">
+      <div class="footer-tag">01 — fragmented workflows</div>
+      <div id="clickHint"><span class="pulse-dot"></span>Click or press space to continue</div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 2: SOLUTION ================= -->
+  <section class="slide" id="slide-2" data-steps="7">
+    <div class="eyebrow">The solution</div>
+    <h1 class="slide-title">One shared database. Every module reads and writes to it.</h1>
+    <p class="slide-sub">Enter a number once — in any module — and it updates everywhere else instantly.</p>
+    <div class="stage">
+      <svg viewBox="0 0 980 560" width="980" height="560">
+        <!-- center: starts as broken hub, morphs to database on step 0 (auto on slide load) -->
+        <g id="s-center">
+          <circle id="s-center-circle" class="center-morph" cx="490" cy="280" r="92" fill="var(--coral-pale)" stroke="var(--coral)" stroke-width="2"/>
+          <text id="s-center-t1" class="center-morph" x="490" y="266" text-anchor="middle" style="font-size:16px;font-weight:700;fill:#8A3315;">CA Firm</text>
+          <text id="s-center-t2" class="center-morph" x="490" y="288" text-anchor="middle" style="font-size:12.5px;font-weight:500;fill:#9C4A2A;">still disconnected</text>
+        </g>
+
+        <!-- the 6 module nodes are visible from the start in pale/broken state, each step "heals" one -->
+        <!-- Accounting -->
+        <g data-static>
+          <line id="s-line-1" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7" class="heal-fade" x1="490" y1="188" x2="490" y2="110"/>
+          <circle cx="490" cy="80" r="58" fill="#fff" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <text x="490" y="74" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Accounting</text>
+          <text x="490" y="93" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">ledgers, books</text>
+        </g>
+        <!-- GST -->
+        <g data-static>
+          <line id="s-line-2" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7" class="heal-fade" x1="546" y1="232" x2="700" y2="140"/>
+          <circle cx="750" cy="115" r="58" fill="#fff" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <text x="750" y="109" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">GST</text>
+          <text x="750" y="128" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">auto-filed</text>
+        </g>
+        <!-- Income tax -->
+        <g data-static>
+          <line id="s-line-3" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7" class="heal-fade" x1="572" y1="305" x2="760" y2="320"/>
+          <circle cx="840" cy="330" r="58" fill="#fff" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <text x="840" y="324" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Income tax</text>
+          <text x="840" y="343" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">pre-filled ITR</text>
+        </g>
+        <!-- Audit -->
+        <g data-static>
+          <line id="s-line-4" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7" class="heal-fade" x1="546" y1="345" x2="700" y2="440"/>
+          <circle cx="750" cy="465" r="58" fill="#fff" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <text x="750" y="459" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Audit</text>
+          <text x="750" y="478" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">linked ledgers</text>
+        </g>
+        <!-- Payroll -->
+        <g data-static>
+          <line id="s-line-5" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7" class="heal-fade" x1="434" y1="345" x2="280" y2="440"/>
+          <circle cx="230" cy="465" r="58" fill="#fff" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <text x="230" y="459" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Payroll</text>
+          <text x="230" y="478" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">auto-synced</text>
+        </g>
+        <!-- Client portal -->
+        <g data-static>
+          <line id="s-line-6" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7" class="heal-fade" x1="408" y1="305" x2="220" y2="320"/>
+          <circle cx="140" cy="330" r="58" fill="#fff" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <text x="140" y="324" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Client portal</text>
+          <text x="140" y="343" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">live status</text>
+        </g>
+        <!-- Compliance -->
+        <g data-static>
+          <line id="s-line-7" stroke="var(--coral-mid)" stroke-width="2.5" stroke-dasharray="6,7" class="heal-fade" x1="434" y1="232" x2="280" y2="140"/>
+          <circle cx="230" cy="115" r="58" fill="#fff" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <text x="230" y="109" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink);">Compliance</text>
+          <text x="230" y="128" text-anchor="middle" style="font-size:12.5px;fill:var(--ink-soft);">auto reminders</text>
+        </g>
+
+        <!-- pulse rings (one per step, fired at center) -->
+        <g data-step="1"><circle class="pulse-ring" cx="490" cy="280" r="100" fill="none" stroke="var(--teal-mid)" stroke-width="2"/></g>
+        <g data-step="2"><circle class="pulse-ring" cx="490" cy="280" r="100" fill="none" stroke="var(--teal-mid)" stroke-width="2"/></g>
+        <g data-step="3"><circle class="pulse-ring" cx="490" cy="280" r="100" fill="none" stroke="var(--teal-mid)" stroke-width="2"/></g>
+        <g data-step="4"><circle class="pulse-ring" cx="490" cy="280" r="100" fill="none" stroke="var(--teal-mid)" stroke-width="2"/></g>
+        <g data-step="5"><circle class="pulse-ring" cx="490" cy="280" r="100" fill="none" stroke="var(--teal-mid)" stroke-width="2"/></g>
+        <g data-step="6"><circle class="pulse-ring" cx="490" cy="280" r="100" fill="none" stroke="var(--teal-mid)" stroke-width="2"/></g>
+        <g data-step="7"><circle class="pulse-ring" cx="490" cy="280" r="100" fill="none" stroke="var(--teal-mid)" stroke-width="2"/></g>
+
+        <!-- closing caption appears with last step -->
+        <g data-step="7">
+          <g class="node-pop">
+            <text x="490" y="540" text-anchor="middle" style="font-size:14.5px;font-weight:700;fill:var(--teal-deep);">Enter once. Sync everywhere. One source of truth.</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <div class="footer-row">
+      <div class="footer-tag">02 — enter once, sync everywhere</div>
+      <div id="clickHint2"><span class="pulse-dot"></span>Click or press space to continue</div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 3: DIFFERENTIATION ================= -->
+  <section class="slide" id="slide-3" data-steps="8">
+    <div class="eyebrow">Where we stand</div>
+    <h1 class="slide-title">Everyone solves one slice. We connect all of them.</h1>
+    <p class="slide-sub">Zoho, ClearTax, Tally, and Karbon are strong individually — a firm still stitches several together by hand.</p>
+    <div class="comp-wrap">
+      <div class="comp-grid">
+        <div class="hcell">Capability</div>
+        <div class="hcell">Tally / Zoho</div>
+        <div class="hcell">ClearTax</div>
+        <div class="hcell">Karbon / TaxDome</div>
+        <div class="hcell cf">CA Friend</div>
+
+        <div class="cell row-reveal" data-step="1" data-row="1" >Accounting & books</div>
+        <div class="cell row-reveal" data-step="1" data-row="1"><span class="tag-pill yes">Strong</span></div>
+        <div class="cell row-reveal" data-step="1" data-row="1"><span class="tag-pill no">—</span></div>
+        <div class="cell row-reveal" data-step="1" data-row="1"><span class="tag-pill no">—</span></div>
+        <div class="cell cf row-reveal" data-step="1" data-row="1"><span class="tag-pill yes">Built in</span></div>
+
+        <div class="cell row-reveal" data-step="2" data-row="2">GST / TDS / ITR filing</div>
+        <div class="cell row-reveal" data-step="2" data-row="2"><span class="tag-pill partial">Add-on</span></div>
+        <div class="cell row-reveal" data-step="2" data-row="2"><span class="tag-pill yes">Strong</span></div>
+        <div class="cell row-reveal" data-step="2" data-row="2"><span class="tag-pill no">—</span></div>
+        <div class="cell cf row-reveal" data-step="2" data-row="2"><span class="tag-pill yes">Built in</span></div>
+
+        <div class="cell row-reveal" data-step="3" data-row="3">Practice & client mgmt</div>
+        <div class="cell row-reveal" data-step="3" data-row="3"><span class="tag-pill no">—</span></div>
+        <div class="cell row-reveal" data-step="3" data-row="3"><span class="tag-pill no">—</span></div>
+        <div class="cell row-reveal" data-step="3" data-row="3"><span class="tag-pill yes">Strong</span></div>
+        <div class="cell cf row-reveal" data-step="3" data-row="3"><span class="tag-pill yes">Built in</span></div>
+
+        <div class="cell row-reveal" data-step="4" data-row="4">Audit workpapers</div>
+        <div class="cell row-reveal" data-step="4" data-row="4"><span class="tag-pill no">—</span></div>
+        <div class="cell row-reveal" data-step="4" data-row="4"><span class="tag-pill no">—</span></div>
+        <div class="cell row-reveal" data-step="4" data-row="4"><span class="tag-pill partial">Generic</span></div>
+        <div class="cell cf row-reveal" data-step="4" data-row="4"><span class="tag-pill yes">Built in</span></div>
+
+        <div class="cell row-reveal" data-step="5" data-row="5">Payroll & compliance calendar</div>
+        <div class="cell row-reveal" data-step="5" data-row="5"><span class="tag-pill no">—</span></div>
+        <div class="cell row-reveal" data-step="5" data-row="5"><span class="tag-pill partial">GST only</span></div>
+        <div class="cell row-reveal" data-step="5" data-row="5"><span class="tag-pill partial">Tasks only</span></div>
+        <div class="cell cf row-reveal" data-step="5" data-row="5"><span class="tag-pill yes">Built in</span></div>
+
+        <div class="cell row-reveal" data-step="6" data-row="6">One shared database</div>
+        <div class="cell row-reveal" data-step="6" data-row="6"><span class="tag-pill no">No</span></div>
+        <div class="cell row-reveal" data-step="6" data-row="6"><span class="tag-pill no">No</span></div>
+        <div class="cell row-reveal" data-step="6" data-row="6"><span class="tag-pill no">No</span></div>
+        <div class="cell cf row-reveal" data-step="6" data-row="6"><span class="tag-pill yes">Yes</span></div>
+
+        <div class="cell row-reveal" data-step="7" data-row="7" style="font-weight:700;">AI invoice OCR + auto ledger</div>
+        <div class="cell row-reveal" data-step="7" data-row="7"><span class="tag-pill no">No</span></div>
+        <div class="cell row-reveal" data-step="7" data-row="7"><span class="tag-pill no">No</span></div>
+        <div class="cell row-reveal" data-step="7" data-row="7"><span class="tag-pill no">No</span></div>
+        <div class="cell cf row-reveal" data-step="7" data-row="7"><span class="tag-pill yes">Yes</span></div>
+      </div>
+    </div>
+    <div id="punchline" data-step="8" class="row-reveal" style="margin-top:22px; font-size:15.5px; font-weight:700; color:var(--teal-deep);">
+      CA Friend is the only platform built on one shared database, end to end.
+    </div>
+    <div class="footer-row">
+      <div class="footer-tag">03 — competitive landscape</div>
+      <div id="clickHint3"><span class="pulse-dot"></span>Click or press space to continue</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const sectionNames = ['The problem', 'The solution', 'Where we stand'];
+  let slideIdx = 0;
+  let stepIdx = 0; // 0 = nothing revealed yet on current slide
+
+  function totalSteps(slide){ return parseInt(slide.dataset.steps || '0', 10); }
+
+  function buildDots(){
+    const wrap = document.getElementById('stepDots');
+    wrap.innerHTML = '';
+    const t = totalSteps(slides[slideIdx]);
+    for(let i=1;i<=t;i++){
+      const d = document.createElement('div');
+      d.className = 'stepdot';
+      d.dataset.i = i;
+      wrap.appendChild(d);
+    }
+    refreshDots();
+  }
+  function refreshDots(){
+    const dots = document.querySelectorAll('.stepdot');
+    dots.forEach(d=>{
+      const i = parseInt(d.dataset.i,10);
+      d.classList.remove('done','current');
+      if(i < stepIdx) d.classList.add('done');
+      if(i === stepIdx) d.classList.add('current');
+    });
+  }
+
+  function showSlide(idx, resetStep=true){
+    slides.forEach((s,i)=>s.classList.toggle('active', i===idx));
+    slideIdx = idx;
+    if(resetStep){ stepIdx = 0; }
+    document.getElementById('slideCounter').textContent = (idx+1) + '/' + slides.length;
+    document.getElementById('sectionName').textContent = sectionNames[idx];
+    // clear all step-marked elements back to hidden
+    const cur = slides[idx];
+    cur.querySelectorAll('[data-step]').forEach(el=>{
+      el.querySelectorAll('.node-pop, .line-draw, .x-pop, .row-reveal, .pulse-ring').forEach(c=>c.classList.remove('show'));
+      el.classList.remove('show');
+      if(el.classList.contains('row-reveal')) el.classList.remove('show');
+    });
+    // reset solution-slide special elements
+    if(cur.id === 'slide-2'){
+      document.getElementById('s-center-circle').setAttribute('fill','var(--coral-pale)');
+      document.getElementById('s-center-circle').setAttribute('stroke','var(--coral)');
+      document.getElementById('s-center-t1').textContent = 'CA Firm';
+      document.getElementById('s-center-t1').style.fill = '#8A3315';
+      document.getElementById('s-center-t1').setAttribute('y','266');
+      document.getElementById('s-center-t2').textContent = 'still disconnected';
+      document.getElementById('s-center-t2').style.fill = '#9C4A2A';
+      document.getElementById('s-center-t2').setAttribute('y','288');
+      for(let i=1;i<=7;i++){
+        const line = document.getElementById('s-line-'+i);
+        if(line){ line.setAttribute('stroke','var(--coral-mid)'); line.setAttribute('stroke-width','2.5'); }
+      }
+    }
+    buildDots();
+  }
+
+  function revealStep(slide, n){
+    // generic reveal: any element with data-step == n inside this slide
+    const targets = slide.querySelectorAll('[data-step="'+n+'"]');
+    targets.forEach(t=>{
+      // direct class-based animation triggers
+      t.classList.add('show');
+      t.querySelectorAll('.node-pop, .line-draw, .x-pop, .row-reveal, .pulse-ring').forEach(c=>c.classList.add('show'));
+      if(t.classList.contains('node-pop') || t.classList.contains('line-draw') || t.classList.contains('x-pop') || t.classList.contains('row-reveal') || t.classList.contains('pulse-ring')){
+        t.classList.add('show');
+      }
+    });
+
+    // special handling: solution slide healing
+    if(slide.id === 'slide-2'){
+      const line = document.getElementById('s-line-'+n);
+      if(line){
+        line.style.transition = 'stroke .4s ease, stroke-width .4s ease, opacity .4s ease';
+        line.setAttribute('stroke', 'var(--teal-mid)');
+        line.setAttribute('stroke-dasharray', 'none');
+        line.setAttribute('stroke-width', '3');
+      }
+      // morph center on first click
+      if(n === 1){
+        const c = document.getElementById('s-center-circle');
+        const t1 = document.getElementById('s-center-t1');
+        const t2 = document.getElementById('s-center-t2');
+        c.style.transition = 'fill 0.6s ease, stroke 0.6s ease';
+        c.setAttribute('fill','var(--teal-deep)');
+        c.setAttribute('stroke','var(--teal-deep)');
+        t1.style.transition = 'fill 0.6s ease';
+        t1.textContent = 'Shared database';
+        t1.style.fill = '#ffffff';
+        t1.setAttribute('y','272');
+        t2.textContent = 'one source of truth';
+        t2.style.fill = 'rgba(255,255,255,0.85)';
+        t2.setAttribute('y','296');
+      }
+    }
+  }
+
+  function updateButtonStates(){
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const atVeryStart = (slideIdx === 0 && stepIdx === 0);
+    const atVeryEnd = (slideIdx === slides.length - 1 && stepIdx === totalSteps(slides[slideIdx]));
+    prevBtn.disabled = atVeryStart;
+    nextBtn.innerHTML = atVeryEnd ? 'Done' : 'Next<span class="arrow">&rarr;</span>';
+    nextBtn.classList.toggle('primary', !atVeryEnd);
+  }
+
+  function advance(){
+    const slide = slides[slideIdx];
+    const total = totalSteps(slide);
+    if(stepIdx < total){
+      stepIdx++;
+      revealStep(slide, stepIdx);
+      refreshDots();
+    } else {
+      if(slideIdx < slides.length - 1){
+        showSlide(slideIdx + 1);
+      }
+    }
+    updateButtonStates();
+  }
+  function goBack(){
+    if(stepIdx > 0){
+      // simplest: re-render slide from scratch up to stepIdx-1
+      const slide = slides[slideIdx];
+      const targetStep = stepIdx - 1;
+      showSlide(slideIdx, true);
+      for(let i=1;i<=targetStep;i++){ revealStep(slides[slideIdx], i); }
+      stepIdx = targetStep;
+      refreshDots();
+    } else if(slideIdx > 0){
+      const newIdx = slideIdx - 1;
+      showSlide(newIdx, true);
+      const total = totalSteps(slides[newIdx]);
+      for(let i=1;i<=total;i++){ revealStep(slides[newIdx], i); }
+      stepIdx = total;
+      refreshDots();
+    }
+    updateButtonStates();
+  }
+
+  document.getElementById('nextBtn').addEventListener('click', advance);
+  document.getElementById('prevBtn').addEventListener('click', goBack);
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'ArrowRight' || e.key === ' '){ e.preventDefault(); advance(); }
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); goBack(); }
+  });
+  document.getElementById('deck').addEventListener('click', (e)=>{
+    if(e.target.closest('.navbtn')) return;
+    advance();
+  });
+
+  showSlide(0);
+  updateButtonStates();
+</script>
+
+</body>
+</html>
